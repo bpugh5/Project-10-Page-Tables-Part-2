@@ -45,7 +45,7 @@ unsigned char get_page_table(int proc_num)
 // Allocate pages for a new process
 //
 int allocate_page() {
-    for (int page_number = 0; page_number < 64; page_number++) {
+    for (int page_number = 0; page_number < PAGE_COUNT; page_number++) {
         if (mem[page_number] == 0) {
             mem[page_number] = 1;
             return page_number;
@@ -53,6 +53,51 @@ int allocate_page() {
     }
     return 0xff;
 }
+
+void deallocate_page(int page) {
+    mem[page] = 0;
+}
+
+void kill_process(int proc_num) {
+    int page_table_page = mem[PTP_OFFSET + proc_num];
+
+    int page_table = page_table_page * PAGE_SIZE;
+
+    for (int k = 0; k < PAGE_COUNT; k++) {
+        if (page_table[k] != 0) {
+            deallocate_page(mem[k]);
+        }
+    }
+    deallocate_page(page_table_page);
+}
+
+int get_physical_address(int proc_num, int virtual_addr) {
+    int virtual_page = virtual_addr >> 8;
+    int offset = virtual_addr & 255;
+    
+    unsigned char page_table = get_page_table(proc_num);
+
+    int physical_page = page_table(virtual_page);
+
+    int physical_address = (physical_page << 8) | offset;
+
+    return physical_address;
+}
+
+void store_value(int proc_num, int virt_addr, int value) {
+    int physical_address = get_physical_address(proc_num, virt_addr);
+    mem[physical_address] = value;
+
+    printf("Store proc %d: %d => %d, value=%d\n", proc_num, virt_addr, physical_address, value);
+}
+
+void load_value(int proc_num, int virt_addr) {
+    int physical_address = get_physical_address(proc_num, virt_addr);
+    int value = mem[physical_address];
+
+    printf("Load proc %d: %d => %d, value=%d\n", proc_num, virt_addr, physical_address, value);
+}
+
 
 //
 // This includes the new process page table and page_count data pages.
