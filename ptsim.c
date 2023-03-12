@@ -59,13 +59,13 @@ void deallocate_page(int page) {
 }
 
 void kill_process(int proc_num) {
-    int page_table_page = mem[PTP_OFFSET + proc_num];
+    int page_table_page = mem[64 + proc_num];
 
-    int page_table = page_table_page * PAGE_SIZE;
+    int page_table = mem[page_table_page * PAGE_SIZE];
 
     for (int k = 0; k < PAGE_COUNT; k++) {
-        if (page_table[k] != 0) {
-            deallocate_page(mem[k]);
+        if (mem[page_table + k] != 0) {
+            deallocate_page(mem[page_table + k]);
         }
     }
     deallocate_page(page_table_page);
@@ -74,10 +74,8 @@ void kill_process(int proc_num) {
 int get_physical_address(int proc_num, int virtual_addr) {
     int virtual_page = virtual_addr >> 8;
     int offset = virtual_addr & 255;
-    
-    unsigned char page_table = get_page_table(proc_num);
 
-    int physical_page = page_table(virtual_page);
+    int physical_page = mem[proc_num * PAGE_COUNT + virtual_page];
 
     int physical_address = (physical_page << 8) | offset;
 
@@ -183,6 +181,15 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "np") == 0) {
             new_process(atoi(argv[i + 1]), atoi(argv[i + 2]));
+        }
+        else if (strcmp(argv[i], "kp") == 0) {
+            kill_process(atoi(argv[i + 1]));
+        }
+        else if (strcmp(argv[i], "sb") == 0) {
+            store_value(atoi(argv[i + 1]), atoi(argv[i + 2]), atoi(argv[i + 3]));
+        }
+        else if (strcmp(argv[i], "lb") == 0) {
+            load_value(atoi(argv[i + 1]), atoi(argv[i + 2]));
         }
     }
 }
