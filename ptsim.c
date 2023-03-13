@@ -59,9 +59,9 @@ void deallocate_page(int page) {
 }
 
 void kill_process(int proc_num) {
-    int page_table_page = mem[64 + proc_num];
+    int page_table_page = get_page_table(proc_num);
 
-    int page_table = mem[page_table_page * PAGE_SIZE];
+    int page_table = page_table_page * PAGE_SIZE;
 
     for (int k = 0; k < PAGE_COUNT; k++) {
         if (mem[page_table + k] != 0) {
@@ -75,7 +75,9 @@ int get_physical_address(int proc_num, int virtual_addr) {
     int virtual_page = virtual_addr >> 8;
     int offset = virtual_addr & 255;
 
-    int physical_page = mem[proc_num * PAGE_COUNT + virtual_page];
+    int page_table = mem[64 + proc_num];
+
+    int physical_page = mem[page_table * PAGE_SIZE + virtual_page];
 
     int physical_address = (physical_page << 8) | offset;
 
